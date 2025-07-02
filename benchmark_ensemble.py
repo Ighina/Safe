@@ -3,7 +3,7 @@ import json
 
 # ----- Benchmark Configuration ----
 
-reward_model_name = "stepherd"  # Options: "stepherd", "rlhflow", "skywork", "armo"
+reward_model_name = "shepherd"  # Options: "shepherd", "rlhflow", "skywork", "armo"
 dataset = "math500"
 n = 50
 reasoning_model_name = "llama31"
@@ -12,7 +12,7 @@ merging_strategy = "weighted_product"  # Options: "weighted_product", "weighted_
 # ------------------------------------
 
 
-def ensemble_benchmark(scored_test_filename, model_path):
+def benchmark_ensemble(scored_test_filename, model_path):
     with open(scored_test_filename, "r") as file:
         test_data = json.load(file)
 
@@ -68,4 +68,4 @@ if __name__ == "__main__":
         f"models/rnn_{dataset}_{n}_{reasoning_model_name}_best_normalized_accuracy.pth"
     )
 
-    ensemble_benchmark(scored_test_filepath, model_path)
+    benchmark_ensemble(scored_test_filepath, model_path)

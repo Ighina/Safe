@@ -5,7 +5,7 @@ import json
 # ----- Benchmark Configuration ----
 
 use_prm = True  # Set to True to merge a reward model score and our aggregator score
-reward_model_name = "stepherd"  # Options: "stepherd", "rlhflow", "skywork", "armo"
+reward_model_name = "shepherd"  # Options: "shepherd", "rlhflow", "skywork", "armo"
 
 dataset = "math500"
 sample_count = 5
@@ -41,8 +41,8 @@ def majority_and_pass(test_data, problem_count):
 
 def benchmark(model_path, test_data):
     if use_prm:
-        if reward_model_name == "stepherd":
-            from rm_stepherd import reward_model
+        if reward_model_name == "shepherd":
+            from rm_shepherd import reward_model
         elif reward_model_name == "rlhflow":
             from rm_rlhflow import reward_model
         elif reward_model_name == "skywork":
@@ -114,7 +114,7 @@ def benchmark(model_path, test_data):
                     answer["score_prm"] = score_prm
 
                     # Several ways to merge the scores
-                    # For finer control, use ensemble_benchmark.py instead
+                    # For finer control, use benchmark_ensemble.py instead
                     score_plus = score + score_prm
                     score_mul = score * score_prm
                     score_min = min(score, score_prm)

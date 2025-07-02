@@ -4,9 +4,9 @@
 
 The official implementation of our paper **Safe** (Safe: Enhancing Mathematical Reasoning in Large Language Models via Retrospective Step-aware Formal Verification) and its associated datasets **FormalStep**. 
 
-[Paper](https://www.arxiv.org/abs/2506.04592)
-[Code](https://github.com/liuchengwucn/Safe)
-[Dataset](https://huggingface.co/datasets/liuchengwu/FormalStep)
+<p align="center">
+  📃 <a href="https://www.arxiv.org/abs/2506.04592" target="_blank">[Paper]</a> • 💻 <a href="https://github.com/liuchengwucn/Safe" target="_blank">[Github]</a> • 🤗 <a href="https://huggingface.co/datasets/liuchengwu/FormalStep" target="_blank">[Dataset]</a>
+</p>
 
 ## Configuration Guide
 
@@ -20,7 +20,7 @@ git clone 'https://github.com/liuchengwucn/Safe.git' && cd Safe
 ```
 
 ### Step 2: Verify Docker and NVIDIA Container Toolkit installation
-Ensure Docker with NVIDIA Container Toolkit and Docker Compose plugin are properly installed. Reference: [Docker](https://docs.docker.com/engine/install/) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+Ensure Docker with NVIDIA Container Toolkit and Docker Compose plugin are properly installed. Reference: [Docker](https://docs.docker.com/engine/install/), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and [Docker Compose](https://docs.docker.com/compose/install/).
 
 ```bash
 docker info | grep nvidia
