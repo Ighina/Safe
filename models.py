@@ -8,19 +8,15 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-api_key = os.getenv("OPENAI_API_KEY", "")
-base_url = os.getenv("OPENAI_BASE_URL", "")
 use_vllm = True
 
-client = openai.OpenAI(api_key=api_key, base_url=base_url)
-vllm_client = openai.OpenAI(base_url="http://reasoning-model:8000/v1")
+client = openai.OpenAI(base_url="http://0.0.0.0:8001/v1", api_key="")
+vllm_client = openai.OpenAI(base_url="http://0.0.0.0:8000/v1", api_key="")
 
 
 @backoff.on_exception(backoff.expo, openai.APIError)
 def completions_with_backoff(model: str, **kwargs):
-    if not model.startswith("gpt"):
-        return vllm_client.chat.completions.create(model=model, **kwargs)
-    return client.chat.completions.create(model=model, **kwargs)
+    return vllm_client.chat.completions.create(model=model, **kwargs)
 
 
 def gpt(
@@ -56,11 +52,8 @@ def gpt(
     return outputs
 
 
-gpt4o = partial(gpt, model_name="gpt-4o-2024-08-06", max_tokens=8192)
-gpt4o_mini = partial(gpt, model_name="gpt-4o-mini-2024-07-18", max_tokens=8192)
-llama = partial(gpt, model_name="meta-llama/Llama-3.1-8B-Instruct", max_tokens=8192)
-llama30 = partial(
-    gpt, model_name="meta-llama/Meta-Llama-3-8B-Instruct", max_tokens=8192
+gpt4o = gpt4o_mini = llama = llama30 = partial(
+    gpt, model_name="openai/gpt-oss-20b", max_tokens=8192
 )
 
 
@@ -78,9 +71,5 @@ if __name__ == "__main__":
     print(vllm_client.models.list())
     print(gpt4o("Hello! Who are you?", n=1))
     print(gpt4o_mini("Hello! Who are you?", n=1))
-    # print(deepseek_math("Hello! Who are you?", n=1))
-    print(
-        llama(
-            "Hello! Who are you?",
-        )
-    )
+    print(deepseek_math("Hello! Who are you?", n=1))
+    print(llama("Hello! Who are you?",n=1))

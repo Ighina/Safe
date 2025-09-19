@@ -20,7 +20,7 @@ import os
 
 # Choose one from the following models:
 # Options: gpt4o, llama30, llama31, deepseek_math
-reasoning_model_name = "llama31"
+reasoning_model_name = "gpt4o" # phy: This is redirected to gpt-oss-20b
 
 # Number of samples to generate for each question (Best of N)
 sample_count = 5
@@ -30,7 +30,7 @@ n = 50
 
 # Dataset to use
 # Options: math500, gsm8k, collegemath
-dataset = "math500"
+dataset = "gsm8k"
 
 # Data split to use
 # Options: train, test

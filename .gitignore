@@ -182,3 +182,6 @@ models/*
 !models/.gitkeep
 
 .vscode
+ruqola
+failed_solution.txt
+*.git

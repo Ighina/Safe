@@ -29,11 +29,12 @@ def download_math():
 
 
 def download_gsm8k():
-    from huggingface_hub import hf_hub_download
+    from datasets import load_dataset
 
     repo_id = "openai/gsm8k"
     local_dir = "./datasets/gsm8k"
-    hf_hub_download(repo_id, local_dir, repo_type="dataset")
+    dataset = load_dataset("openai/gsm8k", 'main', cache_dir="./datasets")
+
 
 
 def download_prm800k():
@@ -87,6 +88,6 @@ def download_collegemath():
 
 if __name__ == "__main__":
     # download_math()
-    # download_gsm8k()
-    download_prm800k()
+    download_gsm8k()
+    # download_prm800k()
     # download_collegemath()

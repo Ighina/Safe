@@ -19,8 +19,7 @@ def prove_and_check(statement: str, search=16) -> Tuple[bool, str | None]:
     """
     Proof a statement using Deepseek Prover 1.5
     """
-
-    vllm_client = openai.OpenAI(base_url="http://deepseek-prover:8000/v1")
+    vllm_client = openai.OpenAI(base_url="http://0.0.0.0:8001/v1", api_key="") # redirect to vllm server
 
     @backoff.on_exception(backoff.expo, openai.APIError)
     def completions_with_backoff(**kwargs):

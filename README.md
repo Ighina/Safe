@@ -1,116 +1,55 @@
-# Safe (ACL 2025 Main)
+# Safe (Ruqola Impl)
+This repository modify from the code for the paper: [Safe: Enhancing Mathematical Reasoning in Large Language Models via Retrospective Step-aware Formal Verification](https://arxiv.org/abs/2506.04592), specifying for our own server environment.
 
-**TL;DR**: Formally verifying LLM mathematical reasoning using the Lean 4 formal language!
-
-The official implementation of our paper **Safe** (Safe: Enhancing Mathematical Reasoning in Large Language Models via Retrospective Step-aware Formal Verification) and its associated datasets **FormalStep**. 
-
-<p align="center">
-  📃 <a href="https://www.arxiv.org/abs/2506.04592" target="_blank">[Paper]</a> • 💻 <a href="https://github.com/liuchengwucn/Safe" target="_blank">[Github]</a> • 🤗 <a href="https://huggingface.co/datasets/liuchengwu/FormalStep" target="_blank">[Dataset]</a>
-</p>
-
-## Configuration Guide
-
-To run this project, you need to locally deploy both a 7B reasoning model and a 7B prover using vLLM. We recommend using a server with at least 2 NVIDIA GPUs for optimal performance.
-
-The Lean environment setup can be complex, so we **strongly recommend** using our provided Docker image to simplify configuration. For those interested in the manual setup process, please refer to our `Dockerfile` and `compose.yml`. Below is a step-by-step Docker-based configuration guide.
-
-### Step 1: Clone the repository
-```bash
-git clone 'https://github.com/liuchengwucn/Safe.git' && cd Safe
+## Installation
 ```
+# Install Lean 4.9.0-rc1
+## Note: This will install elan, the Lean toolchain manager to your home directory (~/.elan)
+curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- --default-toolchain v4.9.0-rc1 -y
+## Add Lean to PATH
+PATH=~/.elan/bin:$PATH
+elan toolchain install v4.9.0-rc1
 
-### Step 2: Verify Docker and NVIDIA Container Toolkit installation
-Ensure Docker with NVIDIA Container Toolkit and Docker Compose plugin are properly installed. Reference: [Docker](https://docs.docker.com/engine/install/), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and [Docker Compose](https://docs.docker.com/compose/install/).
+# Building libraries (It takes 10-20 minutes to build mathlib4)
+## Install mathlib 
+cd mathlib4
+lake build
+lake build repl
+cd - # Project root
 
-```bash
-docker info | grep nvidia
-```
+## Install Copra
+cd copra/src/tools/repl
+lake build repl
+cd - # Project root
+cd copra/data/test/lean4_proj
+lake build
+cd - # Project root
 
-Successful installation will display `nvidia` in Runtimes:
-```
-Runtimes: io.containerd.runc.v2 io.containerd.runtime.v1.linux nvidia runc
-```
+# Install Python dependencies
+## Create a virtual environment (optional but recommended)
+python3 -m venv ruqola
+source ruqola/bin/activate
+pip3 install --no-cache-dir -r requirements.txt
 
-### Step 3: Configure environment variables
-Create `.env` file with your preferred editor and set `OPENAI_API_KEY` and `OPENAI_BASE_URL` for GPT-4o/GPT-4o-mini API access.
+# Optional but recommended: Use the downloaded model weights to avoid repeated downloads
+export HF_HOME=/scratch/datasets/.cache/huggingface
 
-```bash
-OPENAI_API_KEY="sk-123456"
-OPENAI_BASE_URL="https://api.openai.com/v1"
-```
-
-### Step 4 (Optional): Pre-download model weights
-We **strongly recommend** pre-downloading model weights and mounting `~/.cache/huggingface` to the Docker container. Use the following Python code to cache models (Hugging Face CLI login may be required for gated models):
-
-```python
-from transformers import AutoModelForCausalLM, AutoModelForSequenceClassification, AutoTokenizer
-# Reasoning Models
-model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
-tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
-# model = AutoModelForCausalLM.from_pretrained("deepseek-ai/deepseek-math-7b-instruct")
-# tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/deepseek-math-7b-instruct")
-# model = AutoModelForCausalLM.from_pretrained("meta-llama/Meta-Llama-3-8B-Instruct")
-# tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B-Instruct")
-
-# Prover Model
-model = AutoModelForCausalLM.from_pretrained("deepseek-ai/DeepSeek-Prover-V1.5-RL")
-tokenizer = AutoTokenizer.from_pretrained("deepseek-ai/DeepSeek-Prover-V1.5-RL")
-
-# Reward Models
-model = AutoModelForCausalLM.from_pretrained("peiyi9979/math-shepherd-mistral-7b-prm")
-tokenizer = AutoTokenizer.from_pretrained("peiyi9979/math-shepherd-mistral-7b-prm")
-# model = AutoModelForCausalLM.from_pretrained("RLHFlow/Llama3.1-8B-PRM-Deepseek-Data")
-# tokenizer = AutoTokenizer.from_pretrained("RLHFlow/Llama3.1-8B-PRM-Deepseek-Data")
-# model = AutoModelForSequenceClassification.from_pretrained("RLHFlow/ArmoRM-Llama3-8B-v0.1")
-# tokenizer = AutoTokenizer.from_pretrained("RLHFlow/ArmoRM-Llama3-8B-v0.1")
-# model = AutoModelForSequenceClassification.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
-# tokenizer = AutoTokenizer.from_pretrained("Skywork/Skywork-Reward-Llama-3.1-8B-v0.2")
-```
-
-For online model loading (not recommended), modify `compose.yml` to allow downloads:
-
-```yaml
-services:
-  deepseek-prover:
-    ...
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=1
-      # Comment out for online download
-      # - HF_HUB_OFFLINE=1
-      
-  reasoning-model:
-    ...
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=2
-      # Comment out for online download
-      # - HF_HUB_OFFLINE=1
-    ...
-```
-
-### Step 5: Download datasets
-Required datasets: Math, GSM8K, PRM800K (MATH-500), and CollegeMath. Math/GSM8K/CollegeMath are included; use `download.py` for PRM800K:
-
-```bash
+# Download datasets
 python download.py
 ```
 
-### Step 6: GPU allocation
-Specify GPU devices for each service in `compose.yml`. Empirical requirement: ~40GB VRAM per service (prover & reasoning model).
 
-### Step 7 (Optional): Pre-pull Docker images
-Our images include pre-configured Python/Lean environments and cached mathlib. While `docker compose up` auto-pulls these, manual pulling is available:
-
-```bash
-docker pull vllm/vllm-openai:v0.8.5.post1
-docker pull ghcr.io/liuchengwucn/safe:1.0.0
+## Running
+Note: The safe paper maintain two modules: the prover and the reasoning model. The prover is Deepseek Prover 1.5. The reasoning model is a large language model (LLM); we adhere to the conventions of the original repository to use vllm. For example, let the model be `openai/gpt-oss-20b`, you can run the vllm server with the following command:
+```
+CUDA_VISIBLE_DEVICES=1 vllm serve openai/gpt-oss-20b --async-scheduling --port 8000
+CUDA_VISIBLE_DEVICES=2 vllm serve deepseek-ai/DeepSeek-Prover-V1.5-RL --port 8001
 ```
 
-### Step 8: Launch containers & Enter development environment
-Mathlib cache will be automatically symlinked to the project directory.
+Make sure that the vllm server is running before executing the scripts (and prevent using the same GPU for both the vllm server and the prover). 
 
-```bash
-docker compose up -d
-docker compose exec safe bash
+```
+python collect_trace.py
 ```
 
 ## Paper Reproduction
