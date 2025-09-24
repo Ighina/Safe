@@ -75,3 +75,23 @@ If you find our work useful, please consider citing our paper.
 }
 ```
 
+## Proposed Changes
+```
+safe/
+  services/
+    orchestrator/            # FastAPI app, fan-out/in logic, fusion
+    step_parser/             # pure Python splitter
+    formaliser/              # LLM prompt+REPL client
+    prover/                  # LLM prover client + REPL verifier
+    aggregator/              # LSTM model server (TorchScript or ONNX)
+    prm/                     # façade over reward models (optional)
+  libs/
+    lean_client/             # tiny RPC or CLI wrapper around Lean REPL
+    prompts/                 # prompt templates for formalisation and provers
+    scoring/                 # ensemble logic, calibration, tie-breaking
+    data_io/                 # datasets, trace formats, load/save
+  tests/
+    unit/
+    contract/                # HTTP/gRPC interface tests (golden JSON)
+    e2e/
+```

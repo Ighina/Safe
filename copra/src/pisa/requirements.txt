@@ -1,4 +1,0 @@
-protobuf==3.20.3
-grpcio==1.51.1
-grpcio-tools==1.44.0
-func_timeout

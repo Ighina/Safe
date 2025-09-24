@@ -1,0 +1,127 @@
+# SAFE Ruqola Refactor Plan
+
+## High-Level Directory Structure
+
+### 1. Core Architecture
+```
+src/
+├── core/
+│   ├── verifiers/
+│   │   ├── __init__.py
+│   │   ├── base_verifier.py
+│   │   ├── lean_verifier.py
+│   │   └── formalization.py
+│   ├── provers/
+│   │   ├── __init__.py
+│   │   ├── base_prover.py
+│   │   ├── deepseek_prover.py
+│   │   └── copra_prover.py
+│   ├── reasoning/
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── step_divider.py
+│   │   └── answer_checker.py
+│   └── aggregator/
+│       ├── __init__.py
+│       ├── lstm_aggregator.py
+│       └── training.py
+```
+
+### 2. Configuration Management
+```
+config/
+├── __init__.py
+├── base_config.py
+├── model_configs.py
+├── dataset_configs.py
+└── experiment_configs.py
+```
+
+### 3. Data Pipeline
+```
+src/data/
+├── __init__.py
+├── loaders/
+│   ├── __init__.py
+│   ├── base_loader.py
+│   ├── math_loader.py
+│   ├── gsm8k_loader.py
+│   └── collegemath_loader.py
+├── processors/
+│   ├── __init__.py
+│   ├── step_processor.py
+│   └── trace_processor.py
+└── datasets/
+    └── (existing dataset files)
+```
+
+### 4. Experiment Framework
+```
+src/experiments/
+├── __init__.py
+├── base_experiment.py
+├── trace_collection.py
+├── benchmark.py
+├── ensemble_benchmark.py
+└── evaluation/
+    ├── __init__.py
+    ├── metrics.py
+    └── reporters.py
+```
+
+### 5. Utilities and Infrastructure
+```
+src/utils/
+├── __init__.py
+├── timeout.py
+├── file_utils.py
+├── logging.py
+└── process_management.py
+
+src/infrastructure/
+├── __init__.py
+├── lean_setup.py
+├── server_management.py
+└── environment.py
+```
+
+## Refactoring Goals
+
+### Separation of Concerns
+- Extract verification logic from Verifier class into specialized modules
+- Separate prover implementations into a unified prover interface
+- Move Lean-specific verification into core verifiers module
+
+### Configuration-Driven Design
+- Replace hardcoded configurations with configurable experiment classes
+- Create reusable experiment configurations for different datasets and models
+
+### Improved Data Flow
+- Unify data loading logic into a consistent interface
+- Create a modular and testable pipeline for trace collection
+
+### Better Error Handling and Logging
+- Replace print statements with proper logging
+- Improve timeout handling
+- Add better error recovery for Lean verification failures
+
+### Testing Infrastructure
+- Add unit tests for core verification and proving logic
+- Integration tests for the full SAFE pipeline
+- Mock interfaces for external dependencies
+
+## Migration Strategy
+
+1. **Phase 1**: Create new directory structure and base classes
+2. **Phase 2**: Migrate core verification logic while maintaining backward compatibility
+3. **Phase 3**: Refactor data loading and experiment scripts
+4. **Phase 4**: Add comprehensive testing and documentation
+5. **Phase 5**: Remove deprecated files and finalize API
+
+## Benefits
+
+- **Modularity**: Each component has a single responsibility
+- **Testability**: Clear interfaces make unit testing easier
+- **Extensibility**: Easy to add new provers, verifiers, or datasets
+- **Maintainability**: Cleaner separation makes debugging and updates simpler
+- **Configuration**: Experiment parameters are centralized and reusable

@@ -185,3 +185,4 @@ models/*
 ruqola
 failed_solution.txt
 *.git
+*.lake
