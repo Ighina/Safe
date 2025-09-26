@@ -58,6 +58,7 @@ def verify_lean4_file(
             cwd=lean_workspace,
             timeout=timeout,
         )
+        print(proc.stdout)
         raw = json.loads(proc.stdout)
         ast_results = lean4_parser(code, raw.get("ast", [])) if (ast and raw.get("ast")) else {}
 

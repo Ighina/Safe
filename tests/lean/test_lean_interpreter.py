@@ -29,11 +29,10 @@ def test_lean_interpreter():
         dict(code=complete_proof, ast=False, tactics=False),
     ])
     outputs_list = scheduler.get_all_request_outputs(request_id_list)
-    # print(outputs_list)
     out = outputs_list[0]
     assert out.get("pass") is True
     assert len(out.get("sorries", [])) == 1
     scheduler.close()
 
 # Run this in repo root:
-# PYTHONPATH=. pytest tests/lean/test_lean_interpreter.py
+# pytest tests/lean/test_lean_interpreter.py

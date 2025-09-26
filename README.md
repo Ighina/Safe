@@ -10,14 +10,10 @@ curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf 
 PATH=~/.elan/bin:$PATH
 elan toolchain install v4.24.0-rc1
 
-# Building libraries (It takes 10-20 minutes to build mathlib4)
-cd lean_client
-lake update
-lake build
-cd -
 
 # Install Python dependencies
 ## Create a virtual environment (optional but recommended)
+## The pip will install the Lean interpreter automatically
 python3 -m venv ruqola
 source ruqola/bin/activate
 pip3 install -e .
@@ -33,8 +29,6 @@ Please dig into `tests/lean/test_lean_interpreter.py` for more details of usage.
 
 ```
 # Run tests to verify the installation
-PYTHONPATH=. pytest tests/lean/test_lean_interpreter.py
+pytest tests/lean/test_lean_interpreter.py
 ```
-
-
 
