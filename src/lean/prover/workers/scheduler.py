@@ -7,7 +7,7 @@ import multiprocessing as mp
 
 import numpy as np
 
-from prover.utils import AttrDict
+from ..utils import AttrDict
 
 
 class TaskQueue(object):

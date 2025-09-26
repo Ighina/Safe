@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from data_loader import (
+from libs.data_io.data_loader import (
     math_n_loader,
     math_train_loader,
     gsm8k_test_loader,

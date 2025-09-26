@@ -3,101 +3,96 @@ import time
 import json
 import ctypes
 import resource
-import tempfile
 import traceback
 import subprocess
 import multiprocessing as mp
 from pprint import pprint
 
-from prover.lean.ast_parser import lean4_parser
-from prover.workers import ProcessScheduler
-from prover.utils import AttrDict
+from .ast_parser import lean4_parser
+from ..workers import ProcessScheduler
+from ..utils import AttrDict
 
 # Paths and defaults
 HOME_DIR = os.path.expanduser("~")
 DEFAULT_LAKE_PATH = os.environ.get("LAKE_BIN", f"{HOME_DIR}/.elan/bin/lake")
 _THIS_DIR = os.path.dirname(__file__)
-_REPO_ROOT = os.path.abspath(os.path.join(_THIS_DIR, "..", ".."))
-DEFAULT_LEAN_WORKSPACE = os.environ.get("LEAN_WORKSPACE", os.path.join(_REPO_ROOT, "lean"))
+_SRC_ROOT = os.path.abspath(os.path.join(_THIS_DIR, "..", "..", ".."))
+DEFAULT_LEAN_WORKSPACE = os.environ.get("LEAN_WORKSPACE", os.path.join(_SRC_ROOT, "lean"))
 
+assert os.path.exists(DEFAULT_LEAN_WORKSPACE), f"LEAN_WORKSPACE path {DEFAULT_LEAN_WORKSPACE} does not exist"
 
 def verify_lean4_file(
     code: str,
     lake_path: str = DEFAULT_LAKE_PATH,
     lean_workspace: str = DEFAULT_LEAN_WORKSPACE,
     last_env=None,
-    verbose: bool = False,
     timeout: int = 300,
     allTactics: bool = False,
     ast: bool = False,
     premises: bool = False,
     tactics: bool = False,
 ):
-    """Verify Lean 4 code using `lake exe repl` in the given workspace.
-
-    Returns dict with keys: pass, complete, sorries, tactics, errors, warnings,
-    infos, system_messages, system_errors, ast, verified_code, verify_time.
-    """
-    command = dict(
-        cmd=code, allTactics=allTactics, ast=ast, tactics=tactics, premises=premises
-    )
-    if last_env is not None:
-        command.update(env=last_env)
-    message_str = json.dumps(command, ensure_ascii=False)
-    if verbose:
-        print(message_str)
-
     start_time = time.time()
+
+    def _build_command() -> str:
+        payload = {
+            "cmd": code,
+            "allTactics": allTactics,
+            "ast": ast,
+            "tactics": tactics,
+            "premises": premises,
+        }
+        if last_env is not None:
+            payload["env"] = last_env
+        return json.dumps(payload, ensure_ascii=False)
+
+    request_str = _build_command()
+    
     system_messages = ""
     try:
-        with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as temp_file:
-            temp_file.write(message_str + "\r\n\r\n")
-            temp_file.seek(0)
-            outputs = subprocess.run(
-                [lake_path, "exe", "repl"],
-                stdin=temp_file,
-                capture_output=True,
-                text=True,
-                cwd=lean_workspace,
-                timeout=timeout,
-            )
-
-        try:
-            result_raw = json.loads(outputs.stdout)
-        except json.JSONDecodeError:
-            system_messages = (outputs.stderr or "") + ("\n" + outputs.stdout if outputs.stdout else "")
-            raise
-
-        ast_results = (
-            lean4_parser(code, result_raw["ast"]) if ast and result_raw.get("ast") else {}
+        proc = subprocess.run(
+            [lake_path, "exe", "repl"],
+            input=request_str,
+            capture_output=True,
+            text=True,
+            cwd=lean_workspace,
+            timeout=timeout,
         )
+        raw = json.loads(proc.stdout)
+        ast_results = lean4_parser(code, raw.get("ast", [])) if (ast and raw.get("ast")) else {}
+
+        errors = [m for m in raw.get("messages", []) if m.get("severity") == "error"]
+        warnings = [m for m in raw.get("messages", []) if m.get("severity") == "warning"]
+        infos = [m for m in raw.get("messages", []) if m.get("severity") == "info"]
+
         result = {
-            "sorries": result_raw.get("sorries", []),
-            "tactics": result_raw.get("tactics", []),
-            "errors": [m for m in result_raw.get("messages", []) if m.get("severity") == "error"],
-            "warnings": [m for m in result_raw.get("messages", []) if m.get("severity") == "warning"],
-            "infos": [m for m in result_raw.get("messages", []) if m.get("severity") == "info"],
-            "system_messages": system_messages or (outputs.stderr or ""),
+            "sorries": raw.get("sorries", []),
+            "tactics": raw.get("tactics", []),
+            "errors": errors,
+            "warnings": warnings,
+            "infos": infos,
+            "system_messages": system_messages or (proc.stderr or ""),
             "system_errors": None,
             "ast": ast_results,
             "verified_code": code,
+            "pass": len(errors) == 0,
         }
-        result["pass"] = not result["errors"]
         result["complete"] = (
-            result["pass"]
-            and not result["sorries"]
-            and not any(
-                "declaration uses 'sorry'" in (w.get("data", "")) or "failed" in (w.get("data", ""))
-                for w in result["warnings"]
+                len(errors) == 0
+                and not result["sorries"]
+                and not any(
+                    ("declaration uses 'sorry'" in (w.get("data", ""))) or ("failed" in (w.get("data", "")))
+                    for w in warnings
+                )
             )
-        )
-    except Exception:
+    except Exception as e:
         result = {
             "pass": False,
             "complete": False,
             "system_errors": traceback.format_exc(),
             "system_messages": system_messages,
         }
+        
 
     result["verify_time"] = time.time() - start_time
     return result
@@ -190,14 +185,3 @@ class Lean4ServerScheduler(ProcessScheduler):
         self._monitor_process.join()
 
 
-if __name__ == "__main__":
-    sample_path = os.path.join(
-        _REPO_ROOT, "mathlib4", ".lake", "packages", "REPL", "test", "aime_1983_p9.code.in"
-    )
-    with open(sample_path, "r", encoding="utf-8") as f:
-        code = f.read()
-    lean4_scheduler = Lean4ServerScheduler(max_concurrent_requests=1, timeout=300, memory_limit=10, name="verifier")
-    request_id_list = lean4_scheduler.submit_all_request([dict(code=code, ast=True, tactics=True)])
-    outputs_list = lean4_scheduler.get_all_request_outputs(request_id_list)
-    lean4_scheduler.close()
-    pprint(outputs_list)

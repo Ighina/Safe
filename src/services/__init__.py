@@ -3,7 +3,7 @@
 __all__ = [
     "orchestrator",
     "step_parser",
-    "formaliser",
+    "translator",
     "prover",
     "aggregator",
     "prm",

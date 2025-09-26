@@ -1,0 +1,2 @@
+/--placeholder--/
+def hello := "Ruqola"
