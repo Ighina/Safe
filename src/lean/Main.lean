@@ -66,10 +66,5 @@ open BigOperators Real Nat Topology
 
 
 
-
-theorem riemann_hypothesis : RiemannHypothesis := by
-  sorry
-
-
 def main : IO Unit :=
-  IO.println s!"Hello, Riemann Hypothesis!"
+  IO.println s!"Hello, Ruqola!"
